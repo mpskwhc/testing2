@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Area & Dimensions Tug-of-War: Jellyfish vs. Bee!</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Tone.js for high-fidelity audio synthesis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #f8fafc;
+        }
+        .heading-font {
+            font-family: 'Fredoka One', cursive;
+        }
+        /* Horizontal Tug of War Animation */
+        .rope-transition {
+            transition: left 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .disabled-element {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-2 md:p-4">
+
+    <!-- Start & Configuration Screen Overlay -->
+    <div id="start-screen" class="fixed inset-0 bg-slate-900/95 flex flex-col justify-center items-center p-4 z-50 text-white backdrop-blur-md">
+        <div class="max-w-md w-full bg-slate-800 rounded-3xl p-6 md:p-8 border-4 border-indigo-500 shadow-2xl text-center">
+            <span class="text-6xl md:text-7xl block mb-4 animate-bounce">🪼</span>
+            <h1 class="heading-font text-3xl md:text-4xl text-indigo-400 tracking-wide mb-2">
+                Jellyfish vs. Bee
+            </h1>
+            <p class="text-gray-300 text-sm mb-6">
+                Welcome to the Area & Dimensions Tug-of-War! Set up your game preferences below before pulling the rope.
+            </p>
+
+            <!-- Game Mode / Preference Configuration -->
+            <div class="bg-slate-700/50 rounded-2xl p-4 mb-6 border border-slate-600 text-left space-y-4">
+                <span class="text-xs font-bold text-indigo-300 uppercase block text-center tracking-wider">Game Settings</span>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-200 mb-1.5">1. Show Rectangle Diagrams?</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="config-diagram-on" onclick="setDiagramPreference(true)" class="py-2 px-3 text-xs font-bold rounded-xl border-2 border-emerald-500 bg-emerald-500 text-white transition">
+                            Show Diagrams! 📐
+                        </button>
+                        <button id="config-diagram-off" onclick="setDiagramPreference(false)" class="py-2 px-3 text-xs font-bold rounded-xl border-2 border-slate-600 bg-slate-800 hover:bg-slate-700 text-gray-300 transition">
+                            Hide Diagrams! 🔢
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-200 mb-1.5">2. Include Units in Formula Buttons?</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="config-units-on" onclick="setUnitsPreference(true)" class="py-2 px-3 text-xs font-bold rounded-xl border-2 border-emerald-500 bg-emerald-500 text-white transition">
+                            With Units (5 cm) 🏷️
+                        </button>
+                        <button id="config-units-off" onclick="setUnitsPreference(false)" class="py-2 px-3 text-xs font-bold rounded-xl border-2 border-slate-600 bg-slate-800 hover:bg-slate-700 text-gray-300 transition">
+                            Numbers Only (5) 🔢
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-200 mb-1.5">3. Points Lead Needed to Win?</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button id="config-lead-5" onclick="setLeadPreference(5)" class="py-2 px-1.5 text-xs font-bold rounded-xl border-2 border-slate-600 bg-slate-800 hover:bg-slate-700 text-gray-300 transition">
+                            5 Points ⚡
+                        </button>
+                        <button id="config-lead-10" onclick="setLeadPreference(10)" class="py-2 px-1.5 text-xs font-bold rounded-xl border-2 border-emerald-500 bg-emerald-500 text-white transition">
+                            10 Points ⚖️
+                        </button>
+                        <button id="config-lead-15" onclick="setLeadPreference(15)" class="py-2 px-1.5 text-xs font-bold rounded-xl border-2 border-slate-600 bg-slate-800 hover:bg-slate-700 text-gray-300 transition">
+                            15 Points 🏆
+                        </button>
+                    </div>
+                </div>
+                
+                <p class="text-[10px] text-gray-400 text-center pt-2 border-t border-slate-600">
+                    Adjusting settings helps scaffold learning from visual aid to abstract numerical calculations!
+                </p>
+            </div>
+
+            <!-- Play trigger -->
+            <button onclick="startGame()" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white text-lg font-bold py-4 rounded-2xl shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition heading-font uppercase tracking-wider">
+                Start Tug-of-War! 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Game Board Container (Starts Hidden) -->
+    <div id="game-board-wrapper" class="hidden flex-grow flex flex-col justify-between">
+        <!-- Header Section -->
+        <header class="w-full max-w-7xl mx-auto bg-white rounded-2xl shadow-md p-4 mb-4 text-center border-4 border-indigo-400 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="text-left md:max-w-2xl">
+                <h1 class="heading-font text-3xl md:text-4xl text-indigo-600 tracking-wide drop-shadow-sm flex items-center gap-2">
+                    🪼 Jellyfish vs. Bee 🐝
+                </h1>
+                <p class="text-gray-600 text-sm mt-1 font-semibold">
+                    Solve the rectangle area puzzles to pull the horizontal rope to your side! Lead by <span id="header-win-target" class="text-red-500 font-bold">10 points</span> to win!
+                </p>
+            </div>
+            <!-- Touch-friendly Cheerful Music Controls -->
+            <div class="flex items-center gap-2">
+                <button id="music-toggle-btn" onclick="toggleMusic()" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs md:text-sm shadow-md transition active:scale-95 flex items-center gap-2">
+                    <span>🔇 Play Exciting Music</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Game Workspace -->
+        <main class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 flex-grow items-stretch mb-4">
+            
+            <!-- LEFT SIDE: Team Jellyfish (Bioluminescent Indigo Theme) -->
+            <section id="panel-left" class="lg:col-span-5 bg-indigo-50 border-4 border-indigo-400 rounded-3xl p-4 flex flex-col justify-between shadow-lg relative min-h-[450px]">
+                <div class="absolute top-3 left-3 bg-indigo-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                    Team Jellyfish 🪼 (Left)
+                </div>
+                
+                <!-- Score Indicator -->
+                <div class="text-right">
+                    <span class="text-xs text-indigo-700 font-semibold block">Jellyfish Score</span>
+                    <span id="score-left" class="heading-font text-4xl text-indigo-600">0</span>
+                </div>
+
+                <!-- Question Box Left -->
+                <div class="my-3 p-3 bg-white rounded-xl border-2 border-indigo-200 shadow-sm flex flex-col justify-center">
+                    <h3 class="text-indigo-900 font-bold text-sm mb-1">📋 Your Question:</h3>
+                    <p id="question-text-left" class="text-gray-700 font-medium text-sm md:text-base leading-relaxed">
+                        Loading your rectangle puzzle...
+                    </p>
+                    <!-- Dynamic Visual Diagram Container -->
+                    <div id="left-diagram" class="mt-3 flex justify-center"></div>
+                </div>
+
+                <!-- Workspace Left -->
+                <div class="bg-indigo-100/50 p-3 rounded-2xl border border-indigo-200">
+                    <h4 class="text-xs font-bold text-indigo-800 uppercase tracking-wider mb-2">Step 1: Build the Formula</h4>
+                    
+                    <!-- Formula Input Slots -->
+                    <div class="flex items-center justify-center gap-1.5 md:gap-2 py-3 bg-white rounded-xl border border-indigo-300 min-h-[50px] mb-3">
+                        <div id="left-slot-1" class="w-12 h-10 md:w-16 md:h-11 rounded border-2 border-dashed border-indigo-400 flex items-center justify-center font-bold text-sm md:text-base text-indigo-800 bg-indigo-50/50">?</div>
+                        <div id="left-op" class="w-10 h-10 rounded border-2 border-dashed border-purple-400 flex items-center justify-center font-bold text-sm md:text-base text-purple-800 bg-purple-50/50">?</div>
+                        <div id="left-slot-2" class="w-12 h-10 md:w-16 md:h-11 rounded border-2 border-dashed border-indigo-400 flex items-center justify-center font-bold text-sm md:text-base text-indigo-800 bg-indigo-50/50">?</div>
+                        <span class="heading-font text-indigo-700 text-lg md:text-xl">=</span>
+                        <span class="text-xs font-bold text-gray-400 bg-gray-100 p-2 rounded">Answer</span>
+                    </div>
+
+                    <!-- Input choices deck -->
+                    <div class="mb-4">
+                        <span class="text-xs font-bold text-indigo-800 block mb-1">Select keys to fill blanks:</span>
+                        <div id="left-choices" class="flex flex-wrap gap-2 justify-center"></div>
+                    </div>
+
+                    <hr class="border-indigo-200 my-3">
+
+                    <!-- Answer Input & Unit selectors (With Custom Touch Keypad) -->
+                    <h4 class="text-xs font-bold text-indigo-800 uppercase tracking-wider mb-2">Step 2: Calculate and Choose Unit</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <!-- Virtual Keypad Input Section -->
+                        <div class="flex flex-col">
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Final Answer:</label>
+                            <!-- Stylized input display -->
+                            <div id="left-ans-display" class="w-full p-2 bg-white border-2 border-indigo-300 rounded-lg text-center font-bold text-lg text-gray-400 min-h-[44px] flex items-center justify-center mb-2 shadow-inner">
+                                Tap Keypad Below
+                            </div>
+                            
+                            <!-- Mini child-friendly virtual keypad -->
+                            <div class="grid grid-cols-3 gap-1 bg-indigo-200/50 p-1.5 rounded-xl border border-indigo-200">
+                                <button onclick="pressVirtualKey('left', '1')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-indigo-100 text-indigo-900 border border-indigo-300 active:scale-95 transition">1</button>
+                                <button onclick="pressVirtualKey('left', '2')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-indigo-100 text-indigo-900 border border-indigo-300 active:scale-95 transition">2</button>
+                                <button onclick="pressVirtualKey('left', '3')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-indigo-100 text-indigo-900 border border-indigo-300 active:scale-95 transition">3</button>
+                                <button onclick="pressVirtualKey('left', '4')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-indigo-100 text-indigo-900 border border-indigo-300 active:scale-95 transition">4</button>
+                                <button onclick="pressVirtualKey('left', '5')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-indigo-100 text-indigo-900 border border-indigo-300 active:scale-95 transition">5</button>
+                                <button onclick="pressVirtualKey('left', '6')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-indigo-100 text-indigo-900 border border-indigo-300 active:scale-95 transition">6</button>
+                                <button onclick="pressVirtualKey('left', '7')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-indigo-100 text-indigo-900 border border-indigo-300 active:scale-95 transition">7</button>
+                                <button onclick="pressVirtualKey('left', '8')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-indigo-100 text-indigo-900 border border-indigo-300 active:scale-95 transition">8</button>
+                                <button onclick="pressVirtualKey('left', '9')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-indigo-100 text-indigo-900 border border-indigo-300 active:scale-95 transition">9</button>
+                                <button onclick="pressVirtualKey('left', 'clear')" class="py-2.5 font-bold text-xs rounded bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 active:scale-95 transition">Clear</button>
+                                <button onclick="pressVirtualKey('left', '0')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-indigo-100 text-indigo-900 border border-indigo-300 active:scale-95 transition">0</button>
+                                <button onclick="pressVirtualKey('left', 'back')" class="py-2.5 font-bold text-sm rounded bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 active:scale-95 transition">⌫</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Unit Selection Section -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Correct Unit:</label>
+                            <div class="grid grid-cols-2 gap-1.5" id="left-unit-selector">
+                                <button onclick="selectUnit('left', 'cm')" id="left-unit-cm" class="py-3 text-xs font-bold rounded-xl border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition">cm</button>
+                                <button onclick="selectUnit('left', 'cm²')" id="left-unit-cm2" class="py-3 text-xs font-bold rounded-xl border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition">cm²</button>
+                                <button onclick="selectUnit('left', 'm')" id="left-unit-m" class="py-3 text-xs font-bold rounded-xl border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition">m</button>
+                                <button onclick="selectUnit('left', 'm²')" id="left-unit-m2" class="py-3 text-xs font-bold rounded-xl border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition">m²</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submission & Reset actions -->
+                    <div class="flex gap-2 mt-4" id="left-actions-wrapper">
+                        <button onclick="resetWorking('left')" class="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-3 text-xs rounded-xl transition duration-150">
+                            Clear Formula
+                        </button>
+                        <button onclick="submitAnswer('left')" class="w-2/3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 text-sm rounded-xl shadow-md transform hover:-translate-y-0.5 transition duration-150">
+                            Submit Answer!
+                        </button>
+                    </div>
+
+                    <div id="left-next-btn-container" class="hidden mt-2">
+                        <button onclick="generateNextQuestion('left')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 text-sm rounded-xl shadow-md flex items-center justify-center gap-2">
+                            <span>Next Question ➡️</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step-by-step Correct Answer Box -->
+                <div id="feedback-left" class="hidden mt-3 p-3 bg-red-100 border border-red-300 rounded-xl text-red-800 text-xs font-medium"></div>
+            </section>
+
+            <!-- MIDDLE COLUMN: Horizontal Tug of War Court -->
+            <section class="lg:col-span-2 bg-gradient-to-r from-indigo-100 via-slate-50 to-amber-100 border-4 border-slate-300 rounded-3xl p-4 flex flex-col justify-between items-center min-h-[300px] shadow-lg">
+                <div class="text-center">
+                    <span class="heading-font text-indigo-700 text-xs block uppercase tracking-wider mb-1">🪼 Jellyfish Side</span>
+                    <span class="text-[10px] text-gray-500 font-bold block">TUG OF WAR COURT</span>
+                </div>
+
+                <!-- Horizontal Rope Track Container -->
+                <div class="relative w-full h-16 bg-slate-200 border-2 border-slate-300 rounded-full my-4 overflow-hidden shadow-inner flex items-center justify-center">
+                    
+                    <!-- Horizontal Rope -->
+                    <div class="absolute h-2 w-full bg-amber-800/80 rounded-full shadow"></div>
+
+                    <!-- Win Zones (Left and Right ends) -->
+                    <div class="absolute left-0 top-0 bottom-0 w-8 bg-indigo-500/40 border-r-2 border-indigo-500 flex items-center justify-center font-black text-white text-[10px]">WIN</div>
+                    <div class="absolute right-0 top-0 bottom-0 w-8 bg-amber-500/40 border-l-2 border-amber-500 flex items-center justify-center font-black text-white text-[10px]">WIN</div>
+
+                    <!-- Red Flag/Ribbon Marker -->
+                    <!-- Starts dead center at left-1/2 (50%) -->
+                    <div id="rope-ribbon" class="rope-transition absolute w-10 h-10 bg-red-600 rounded-full border-4 border-white shadow-xl flex items-center justify-center cursor-pointer" style="left: 50%; transform: translateX(-50%);">
+                        <span class="text-lg">🎈</span>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <span class="text-[10px] text-gray-500 font-bold block">CURRENT LEAD</span>
+                    <div id="lead-value-box" class="bg-white border-2 border-slate-300 rounded-xl py-1 px-4 mt-1 font-bold text-sm text-slate-700 shadow-sm">
+                        Perfectly Tied!
+                    </div>
+                    <span class="heading-font text-amber-700 text-xs block uppercase tracking-wider mt-2">Bee Side 🐝</span>
+                </div>
+            </section>
+
+            <!-- RIGHT SIDE: Team Bee (Amber/Yellow Theme) -->
+            <section id="panel-right" class="lg:col-span-5 bg-amber-50 border-4 border-amber-400 rounded-3xl p-4 flex flex-col justify-between shadow-lg relative min-h-[450px]">
+                <div class="absolute top-3 right-3 bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                    Team Bee 🐝 (Right)
+                </div>
+
+                <!-- Score Indicator -->
+                <div class="text-right">
+                    <span class="text-xs text-amber-700 font-semibold block">Bee Score</span>
+                    <span id="score-right" class="heading-font text-4xl text-amber-600">0</span>
+                </div>
+
+                <!-- Question Box Right -->
+                <div class="my-3 p-3 bg-white rounded-xl border-2 border-amber-200 shadow-sm flex flex-col justify-center">
+                    <h3 class="text-amber-900 font-bold text-sm mb-1">📋 Your Question:</h3>
+                    <p id="question-text-right" class="text-gray-700 font-medium text-sm md:text-base leading-relaxed">
+                        Loading your rectangle puzzle...
+                    </p>
+                    <!-- Dynamic Visual Diagram Container -->
+                    <div id="right-diagram" class="mt-3 flex justify-center"></div>
+                </div>
+
+                <!-- Workspace Right -->
+                <div class="bg-amber-100/50 p-3 rounded-2xl border border-amber-200">
+                    <h4 class="text-xs font-bold text-amber-800 uppercase tracking-wider mb-2">Step 1: Build the Formula</h4>
+
+                    <!-- Formula Input Slots -->
+                    <div class="flex items-center justify-center gap-1.5 md:gap-2 py-3 bg-white rounded-xl border border-amber-300 min-h-[50px] mb-3">
+                        <div id="right-slot-1" class="w-12 h-10 md:w-16 md:h-11 rounded border-2 border-dashed border-amber-400 flex items-center justify-center font-bold text-sm md:text-base text-amber-800 bg-amber-50/50">?</div>
+                        <div id="right-op" class="w-10 h-10 rounded border-2 border-dashed border-purple-400 flex items-center justify-center font-bold text-sm md:text-base text-purple-800 bg-purple-50/50">?</div>
+                        <div id="right-slot-2" class="w-12 h-10 md:w-16 md:h-11 rounded border-2 border-dashed border-amber-400 flex items-center justify-center font-bold text-sm md:text-base text-amber-800 bg-amber-50/50">?</div>
+                        <span class="heading-font text-amber-700 text-lg md:text-xl">=</span>
+                        <span class="text-xs font-bold text-gray-400 bg-gray-100 p-2 rounded">Answer</span>
+                    </div>
+
+                    <!-- Input choices deck -->
+                    <div class="mb-4">
+                        <span class="text-xs font-bold text-amber-800 block mb-1">Select keys to fill blanks:</span>
+                        <div id="right-choices" class="flex flex-wrap gap-2 justify-center"></div>
+                    </div>
+
+                    <hr class="border-amber-200 my-3">
+
+                    <!-- Answer Input & Unit selectors (With Custom Touch Keypad) -->
+                    <h4 class="text-xs font-bold text-amber-800 uppercase tracking-wider mb-2">Step 2: Calculate and Choose Unit</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <!-- Virtual Keypad Input Section -->
+                        <div class="flex flex-col">
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Final Answer:</label>
+                            <!-- Stylized input display -->
+                            <div id="right-ans-display" class="w-full p-2 bg-white border-2 border-amber-300 rounded-lg text-center font-bold text-lg text-gray-400 min-h-[44px] flex items-center justify-center mb-2 shadow-inner">
+                                Tap Keypad Below
+                            </div>
+                            
+                            <!-- Mini child-friendly virtual keypad -->
+                            <div class="grid grid-cols-3 gap-1 bg-amber-200/50 p-1.5 rounded-xl border border-amber-200">
+                                <button onclick="pressVirtualKey('right', '1')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 active:scale-95 transition">1</button>
+                                <button onclick="pressVirtualKey('right', '2')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 active:scale-95 transition">2</button>
+                                <button onclick="pressVirtualKey('right', '3')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 active:scale-95 transition">3</button>
+                                <button onclick="pressVirtualKey('right', '4')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 active:scale-95 transition">4</button>
+                                <button onclick="pressVirtualKey('right', '5')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 active:scale-95 transition">5</button>
+                                <button onclick="pressVirtualKey('right', '6')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 active:scale-95 transition">6</button>
+                                <button onclick="pressVirtualKey('right', '7')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 active:scale-95 transition">7</button>
+                                <button onclick="pressVirtualKey('right', '8')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 active:scale-95 transition">8</button>
+                                <button onclick="pressVirtualKey('right', '9')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 active:scale-95 transition">9</button>
+                                <button onclick="pressVirtualKey('right', 'clear')" class="py-2.5 font-bold text-xs rounded bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 active:scale-95 transition">Clear</button>
+                                <button onclick="pressVirtualKey('right', '0')" class="py-2.5 font-bold text-sm rounded bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 active:scale-95 transition">0</button>
+                                <button onclick="pressVirtualKey('right', 'back')" class="py-2.5 font-bold text-sm rounded bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 active:scale-95 transition">⌫</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Unit Selection Section -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Correct Unit:</label>
+                            <div class="grid grid-cols-2 gap-1.5" id="right-unit-selector">
+                                <button onclick="selectUnit('right', 'cm')" id="right-unit-cm" class="py-3 text-xs font-bold rounded-xl border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition">cm</button>
+                                <button onclick="selectUnit('right', 'cm²')" id="right-unit-cm2" class="py-3 text-xs font-bold rounded-xl border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition">cm²</button>
+                                <button onclick="selectUnit('right', 'm')" id="right-unit-m" class="py-3 text-xs font-bold rounded-xl border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition">m</button>
+                                <button onclick="selectUnit('right', 'm²')" id="right-unit-m2" class="py-3 text-xs font-bold rounded-xl border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition">m²</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submission & Reset actions -->
+                    <div class="flex gap-2 mt-4" id="right-actions-wrapper">
+                        <button onclick="resetWorking('right')" class="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-3 text-xs rounded-xl transition duration-150">
+                            Clear Formula
+                        </button>
+                        <button onclick="submitAnswer('right')" class="w-2/3 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-4 text-sm rounded-xl shadow-md transform hover:-translate-y-0.5 transition duration-150">
+                            Submit Answer!
+                        </button>
+                    </div>
+
+                    <div id="right-next-btn-container" class="hidden mt-2">
+                        <button onclick="generateNextQuestion('right')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 text-sm rounded-xl shadow-md flex items-center justify-center gap-2">
+                            <span>Next Question ➡️</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step-by-step Correct Answer Box -->
+                <div id="feedback-right" class="hidden mt-3 p-3 bg-red-100 border border-red-300 rounded-xl text-red-800 text-xs font-medium"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Winner Modal -->
+    <div id="win-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center border-8 border-yellow-400 shadow-2xl transform transition-transform">
+            <span class="text-7xl" id="win-emoji">🪼</span>
+            <h2 id="win-title" class="heading-font text-3xl text-yellow-600 mt-4 mb-2">Team Jellyfish Wins!</h2>
+            <p id="win-desc" class="text-gray-600 text-sm mb-6">By calculating dimensions flawlessly, they pulled the rope across the line with a 10-point lead!</p>
+            <button onclick="resetWholeGame()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transform hover:-translate-y-1 transition text-lg heading-font w-full">
+                Play Again 🔄
+            </button>
+        </div>
+    </div>
+
+    <!-- Interactive Game Engine Logic -->
+    <script>
+        let scores = { left: 0, right: 0 };
+        
+        // Game Preferences
+        let showDiagrams = true; 
+        let includeUnitsInFormula = true; 
+        let targetLead = 10;
+
+        let musicPlaying = false;
+        let melodySynth = null;
+        let bassSynth = null;
+        let melodyPart = null;
+        let bassPart = null;
+        let sfxSynth = null;
+
+        // Independent team question status
+        let teamQuestions = {
+            left: null,
+            right: null
+        };
+
+        // Independent workspace inputs
+        let studentState = {
+            left: {
+                slot1: null,
+                op: null,
+                slot2: null,
+                unit: null,
+                submitted: false
+            },
+            right: {
+                slot1: null,
+                op: null,
+                slot2: null,
+                unit: null,
+                submitted: false
+            }
+        };
+
+        // Track custom Virtual Keypad answers for both teams
+        let virtualAnswers = {
+            left: "",
+            right: ""
+        };
+
+        const UNITS = ['cm', 'm'];
+
+        // Preferences Lobby Helpers
+        function setDiagramPreference(preference) {
+            showDiagrams = preference;
+            
+            const btnOn = document.getElementById('config-diagram-on');
+            const btnOff = document.getElementById('config-diagram-off');
+
+            if (preference) {
+                btnOn.className = "py-2 px-3 text-xs font-bold rounded-xl border-2 border-emerald-500 bg-emerald-500 text-white transition";
+                btnOff.className = "py-2 px-3 text-xs font-bold rounded-xl border-2 border-slate-600 bg-slate-800 hover:bg-slate-700 text-gray-300 transition";
+            } else {
+                btnOn.className = "py-2 px-3 text-xs font-bold rounded-xl border-2 border-slate-600 bg-slate-800 hover:bg-slate-700 text-gray-300 transition";
+                btnOff.className = "py-2 px-3 text-xs font-bold rounded-xl border-2 border-emerald-500 bg-emerald-500 text-white transition";
+            }
+        }
+
+        function setUnitsPreference(preference) {
+            includeUnitsInFormula = preference;
+            
+            const btnOn = document.getElementById('config-units-on');
+            const btnOff = document.getElementById('config-units-off');
+
+            if (preference) {
+                btnOn.className = "py-2 px-3 text-xs font-bold rounded-xl border-2 border-emerald-500 bg-emerald-500 text-white transition";
+                btnOff.className = "py-2 px-3 text-xs font-bold rounded-xl border-2 border-slate-600 bg-slate-800 hover:bg-slate-700 text-gray-300 transition";
+            } else {
+                btnOn.className = "py-2 px-3 text-xs font-bold rounded-xl border-2 border-slate-600 bg-slate-800 hover:bg-slate-700 text-gray-300 transition";
+                btnOff.className = "py-2 px-3 text-xs font-bold rounded-xl border-2 border-emerald-500 bg-emerald-500 text-white transition";
+            }
+        }
+
+        function setLeadPreference(points) {
+            targetLead = points;
+            const btn5 = document.getElementById('config-lead-5');
+            const btn10 = document.getElementById('config-lead-10');
+            const btn15 = document.getElementById('config-lead-15');
+
+            // Toggle highlight styles across choice buttons
+            const inactiveClass = "py-2 px-1.5 text-xs font-bold rounded-xl border-2 border-slate-600 bg-slate-800 hover:bg-slate-700 text-gray-300 transition";
+            const activeClass = "py-2 px-1.5 text-xs font-bold rounded-xl border-2 border-emerald-500 bg-emerald-500 text-white transition";
+
+            btn5.className = points === 5 ? activeClass : inactiveClass;
+            btn10.className = points === 10 ? activeClass : inactiveClass;
+            btn15.className = points === 15 ? activeClass : inactiveClass;
+        }
+
+        // Transitions from Setup page to Active arena
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-board-wrapper').classList.remove('hidden');
+
+            // Update win rules dynamically in the UI
+            document.getElementById('header-win-target').innerText = `${targetLead} points`;
+
+            // Generate first problems with selected preference loaded
+            generateNextQuestion('left');
+            generateNextQuestion('right');
+            updateRopeAndCheckWin();
+        }
+
+        // Pure P.4 Mathematics generator with zero remainders & clean division
+        function generateMathConfig() {
+            const unit = UNITS[Math.floor(Math.random() * UNITS.length)];
+            const type = Math.floor(Math.random() * 3); // 0: Area, 1: Length, 2: Width
+
+            const sideA = Math.floor(Math.random() * 10) + 3; // Length (horizontal)
+            const sideB = Math.floor(Math.random() * 8) + 3;  // Width (vertical)
+            const area = sideA * sideB;
+
+            let questionText = "";
+            let requiredExpression = {}; 
+            let choices = [];
+
+            if (type === 0) {
+                // Calculate Area (Hide the answer "area" from choices)
+                questionText = `Find the <b>area</b> of a rectangle with a <b>length of ${sideA} ${unit}</b> and a <b>width of ${sideB} ${unit}</b>.`;
+                requiredExpression = {
+                    first: Math.max(sideA, sideB),
+                    op: '×',
+                    second: Math.min(sideA, sideB),
+                    answer: area,
+                    unit: `${unit}²`
+                };
+                
+                // Pedagogy decoy: addition of dimensions (perimeter / area confusion)
+                const decoyVal = sideA + sideB;
+                choices = [
+                    { value: sideA, displayWithUnit: `${sideA} ${unit}`, displayWithoutUnit: `${sideA}`, isUnit: false },
+                    { value: sideB, displayWithUnit: `${sideB} ${unit}`, displayWithoutUnit: `${sideB}`, isUnit: false },
+                    { value: decoyVal, displayWithUnit: `${decoyVal} ${unit}`, displayWithoutUnit: `${decoyVal}`, isUnit: false },
+                    { value: '×', display: '×', isOp: true },
+                    { value: '÷', display: '÷', isOp: true }
+                ];
+            } else if (type === 1) {
+                // Calculate Length (Hide the answer "sideA" from choices)
+                questionText = `Find the <b>length</b> of a rectangle with a known <b>area of ${area} ${unit}²</b> and a <b>width of ${sideB} ${unit}</b>.`;
+                requiredExpression = {
+                    first: area,
+                    op: '÷',
+                    second: sideB,
+                    answer: sideA,
+                    unit: unit
+                };
+                
+                const decoyVal = Math.max(area - sideB, 5);
+                choices = [
+                    { value: area, displayWithUnit: `${area} ${unit}²`, displayWithoutUnit: `${area}`, isUnit: true },
+                    { value: sideB, displayWithUnit: `${sideB} ${unit}`, displayWithoutUnit: `${sideB}`, isUnit: false },
+                    { value: decoyVal, displayWithUnit: `${decoyVal} ${unit}`, displayWithoutUnit: `${decoyVal}`, isUnit: false },
+                    { value: '×', display: '×', isOp: true },
+                    { value: '÷', display: '÷', isOp: true }
+                ];
+            } else {
+                // Calculate Width (Hide the answer "sideB" from choices)
+                questionText = `Find the <b>width</b> of a rectangle with a known <b>area of ${area} ${unit}²</b> and a <b>length of ${sideA} ${unit}</b>.`;
+                requiredExpression = {
+                    first: area,
+                    op: '÷',
+                    second: sideA,
+                    answer: sideB,
+                    unit: unit
+                };
+                
+                const decoyVal = Math.max(area - sideA, 5);
+                choices = [
+                    { value: area, displayWithUnit: `${area} ${unit}²`, displayWithoutUnit: `${area}`, isUnit: true },
+                    { value: sideA, displayWithUnit: `${sideA} ${unit}`, displayWithoutUnit: `${sideA}`, isUnit: false },
+                    { value: decoyVal, displayWithUnit: `${decoyVal} ${unit}`, displayWithoutUnit: `${decoyVal}`, isUnit: false },
+                    { value: '×', display: '×', isOp: true },
+                    { value: '÷', display: '÷', isOp: true }
+                ];
+            }
+
+            return {
+                type,
+                unit,
+                sideA,
+                sideB,
+                area,
+                questionText,
+                requiredExpression,
+                choices: choices.sort(() => Math.random() - 0.5)
+            };
+        }
+
+        // Generate and display independent question configuration
+        function generateNextQuestion(team) {
+            teamQuestions[team] = generateMathConfig();
+
+            // Clear state variables
+            studentState[team] = {
+                slot1: null,
+                op: null,
+                slot2: null,
+                unit: null,
+                submitted: false
+            };
+
+            // Clear custom virtual answers
+            virtualAnswers[team] = "";
+            const displayEl = document.getElementById(`${team}-ans-display`);
+            displayEl.innerText = "Tap Keypad Below";
+            displayEl.className = "w-full p-2 bg-white border-2 border-dashed rounded-lg text-center font-bold text-lg text-gray-400 min-h-[44px] flex items-center justify-center mb-2 shadow-inner";
+
+            // Reset workspace view elements
+            document.getElementById(`question-text-${team}`).innerHTML = teamQuestions[team].questionText;
+            document.getElementById(`feedback-${team}`).classList.add('hidden');
+            
+            // Re-enable input workspaces
+            document.getElementById(`panel-${team}`).classList.remove('disabled-element');
+            document.getElementById(`${team}-actions-wrapper`).classList.remove('hidden');
+            document.getElementById(`${team}-next-btn-container`).classList.add('hidden');
+
+            renderDecks(team);
+            renderSlots(team);
+            resetUnitBtnHighlighting(team);
+            drawRectangleDiagram(team);
+        }
+
+        // Draws highly illustrative dynamic SVGs of the rectangle for visual learning support
+        function drawRectangleDiagram(team) {
+            const container = document.getElementById(`${team}-diagram`);
+            
+            // Check preference configuration to hide/draw diagrams
+            if (!showDiagrams) {
+                container.innerHTML = "";
+                container.className = "hidden";
+                return;
+            } else {
+                container.className = "mt-3 flex justify-center animate-fade-in";
+            }
+
+            const q = teamQuestions[team];
+            if (!q) return;
+
+            const sideA = q.sideA; // Length (horizontal)
+            const sideB = q.sideB; // Width (vertical)
+            const area = q.area;
+            const type = q.type;
+            const unit = q.unit;
+
+            // Calculate scaled rectangle dimensions to maintain visibility within bounding viewport
+            // Box size boundaries of width: (90px to 150px) and height: (50px to 95px)
+            const rectW = 85 + (sideA * 5);
+            const rectH = 45 + (sideB * 5.5);
+            const x = 120 - rectW / 2;
+            const y = 80 - rectH / 2;
+
+            const isLeft = (team === 'left');
+            const strokeColor = isLeft ? '#4f46e5' : '#d97706';
+            const fillColor = isLeft ? '#eef2ff' : '#fffbeb';
+            const textColor = isLeft ? '#312e81' : '#78350f';
+
+            let topText = `${sideA} ${unit}`;
+            let sideText = `${sideB} ${unit}`;
+            let centerText = `${area} ${unit}²`;
+
+            // Adjust labels according to what value is unknown
+            if (type === 0) {
+                centerText = `? ${unit}²`;
+            } else if (type === 1) {
+                topText = `? ${unit}`;
+            } else if (type === 2) {
+                sideText = `? ${unit}`;
+            }
+
+            const svg = `
+                <svg width="220" height="150" viewBox="0 0 240 160" class="mx-auto drop-shadow-sm">
+                    <!-- Clean, solid card background with zero grid lines -->
+                    <rect width="240" height="160" fill="${isLeft ? '#e0e7ff' : '#fef3c7'}" rx="16" opacity="0.3" />
+
+                    <!-- The Main Rectangle Shape (Sharp corners - no rx/ry curves) -->
+                    <rect x="${x}" y="${y}" width="${rectW}" height="${rectH}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="3" />
+
+                    <!-- Length Text (Top dimension) -->
+                    <text x="120" y="${y - 8}" fill="${textColor}" font-weight="bold" font-size="12" text-anchor="middle" class="heading-font">${topText}</text>
+
+                    <!-- Width Text (Left side dimension) -->
+                    <text x="${x - 10}" y="84" fill="${textColor}" font-weight="bold" font-size="12" text-anchor="end" class="heading-font">${sideText}</text>
+
+                    <!-- Area Text (Inside the rectangle) -->
+                    <text x="120" y="85" fill="${textColor}" font-weight="bold" font-size="13" text-anchor="middle" class="heading-font">${centerText}</text>
+                </svg>
+            `;
+
+            container.innerHTML = svg;
+        }
+
+        // Render input choice deck buttons
+        function renderDecks(team) {
+            const deck = document.getElementById(`${team}-choices`);
+            deck.innerHTML = '';
+
+            const borderCol = team === 'left' ? 'border-indigo-300 text-indigo-800' : 'border-amber-300 text-amber-800';
+
+            teamQuestions[team].choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = `px-3 py-2 text-xs md:text-sm font-bold rounded-lg border-2 shadow-sm transition transform hover:scale-105 ${choice.isOp ? 'bg-purple-100 border-purple-300 text-purple-700' : 'bg-white ' + borderCol}`;
+                
+                // Adapt display output conditionally based on units preference
+                const displayLabel = choice.isOp ? choice.display : (includeUnitsInFormula ? choice.displayWithUnit : choice.displayWithoutUnit);
+                btn.innerText = displayLabel;
+                
+                btn.onclick = () => selectItem(team, choice.value);
+                deck.appendChild(btn);
+            });
+        }
+
+        function selectItem(team, val) {
+            if (studentState[team].submitted) return;
+
+            // Instantly clear any active validation warnings when they edit the equation
+            clearWarningIfActive(team);
+
+            const state = studentState[team];
+            if (val === '×' || val === '÷') {
+                state.op = val;
+            } else {
+                if (state.slot1 === null) {
+                    state.slot1 = val;
+                } else if (state.slot2 === null) {
+                    state.slot2 = val;
+                } else {
+                    state.slot1 = val;
+                }
+            }
+            renderSlots(team);
+        }
+
+        function resetWorking(team) {
+            clearWarningIfActive(team);
+            studentState[team].slot1 = null;
+            studentState[team].op = null;
+            studentState[team].slot2 = null;
+            renderSlots(team);
+        }
+
+        function renderSlots(team) {
+            const state = studentState[team];
+            const q = teamQuestions[team];
+            const s1 = document.getElementById(`${team}-slot-1`);
+            const op = document.getElementById(`${team}-op`);
+            const s2 = document.getElementById(`${team}-slot-2`);
+
+            const formatDisplay = (num) => {
+                if (num === null) return '?';
+                // Adapt active equation slot displays based on custom units configuration
+                if (!includeUnitsInFormula) return num;
+                if (num === q.area) return `${num}${q.unit}²`;
+                return `${num}${q.unit}`;
+            };
+
+            s1.innerText = formatDisplay(state.slot1);
+            s1.className = state.slot1 !== null ? "w-12 h-10 md:w-16 md:h-11 rounded border-2 border-green-500 flex items-center justify-center font-bold text-sm md:text-base text-green-700 bg-green-50" : "w-12 h-10 md:w-16 md:h-11 rounded border-2 border-dashed border-gray-400 flex items-center justify-center font-bold text-sm md:text-base text-gray-400 bg-gray-50/50";
+            
+            op.innerText = state.op !== null ? state.op : '?';
+            op.className = state.op !== null ? "w-10 h-10 rounded border-2 border-green-500 flex items-center justify-center font-bold text-sm md:text-base text-green-700 bg-green-50" : "w-10 h-10 rounded border-2 border-dashed border-purple-400 flex items-center justify-center font-bold text-sm md:text-base text-purple-400 bg-purple-50/50";
+
+            s2.innerText = formatDisplay(state.slot2);
+            s2.className = state.slot2 !== null ? "w-12 h-10 md:w-16 md:h-11 rounded border-2 border-green-500 flex items-center justify-center font-bold text-sm md:text-base text-green-700 bg-green-50" : "w-12 h-10 md:w-16 md:h-11 rounded border-2 border-dashed border-gray-400 flex items-center justify-center font-bold text-sm md:text-base text-gray-400 bg-gray-50/50";
+        }
+
+        // Child-friendly Virtual Keypad handler
+        function pressVirtualKey(team, action) {
+            if (studentState[team].submitted) return;
+            clearWarningIfActive(team);
+
+            let currentAnswer = virtualAnswers[team];
+
+            if (action === 'clear') {
+                currentAnswer = "";
+            } else if (action === 'back') {
+                currentAnswer = currentAnswer.slice(0, -1);
+            } else {
+                // Limit maximum digits to 4 (plenty for Primary 4 calculations)
+                if (currentAnswer.length < 4) {
+                    // Prevent leading zeroes
+                    if (currentAnswer === "" && action === "0") {
+                        // ignore leading zero
+                    } else {
+                        currentAnswer += action;
+                    }
+                }
+            }
+
+            virtualAnswers[team] = currentAnswer;
+
+            // Render output inside the stylized display box
+            const displayEl = document.getElementById(`${team}-ans-display`);
+            const borderCol = team === 'left' ? 'border-indigo-400' : 'border-amber-400';
+            
+            if (currentAnswer === "") {
+                displayEl.innerText = "Tap Keypad Below";
+                displayEl.className = "w-full p-2 bg-white border-2 border-dashed rounded-lg text-center font-bold text-lg text-gray-400 min-h-[44px] flex items-center justify-center mb-2 shadow-inner";
+            } else {
+                displayEl.innerText = currentAnswer;
+                displayEl.className = `w-full p-2 bg-white border-2 ${borderCol} rounded-lg text-center font-extrabold text-2xl text-gray-800 min-h-[44px] flex items-center justify-center mb-2 shadow-sm`;
+            }
+        }
+
+        function selectUnit(team, unitStr) {
+            if (studentState[team].submitted) return;
+            clearWarningIfActive(team);
+            studentState[team].unit = unitStr;
+            updateUnitButtonUI(team, unitStr);
+        }
+
+        function updateUnitButtonUI(team, chosenUnit) {
+            const units = ['cm', 'cm2', 'm', 'm2'];
+            units.forEach(u => {
+                const cleanU = u.replace('2', '²');
+                const btn = document.getElementById(`${team}-unit-${u}`);
+                if (cleanU === chosenUnit) {
+                    btn.className = "py-3 text-xs font-bold rounded-xl border-2 border-emerald-500 bg-emerald-500 text-white shadow-sm transition";
+                } else {
+                    btn.className = "py-3 text-xs font-bold rounded-xl border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition";
+                }
+            });
+        }
+
+        function resetUnitBtnHighlighting(team) {
+            const units = ['cm', 'cm2', 'm', 'm2'];
+            units.forEach(u => {
+                const btn = document.getElementById(`${team}-unit-${u}`);
+                btn.className = "py-3 text-xs font-bold rounded-xl border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition";
+            });
+        }
+
+        // Submit and Validate Math Formula logic
+        function submitAnswer(team) {
+            const state = studentState[team];
+            const feedbackBox = document.getElementById(`feedback-${team}`);
+            const q = teamQuestions[team];
+
+            if (state.submitted) return;
+
+            // Get calculation from virtual answers instead of keyboard text fields
+            const inputValStr = virtualAnswers[team];
+            const inputVal = parseInt(inputValStr);
+
+            // Validation Check: Render warnings directly inside/below the active working box
+            if (state.slot1 === null || state.op === null || state.slot2 === null) {
+                showInlineWarning(team, "Check your formula! 📐", "Please click the numbers and operators above to fill in all the blanks of your equation first.");
+                return;
+            }
+            if (!inputValStr || isNaN(inputVal)) {
+                showInlineWarning(team, "Write your calculation! ✏️", "Please use the virtual keypad above to type in your final answer.");
+                return;
+            }
+            if (!state.unit) {
+                showInlineWarning(team, "Pick a unit! 📏", "Please select the correct unit (like cm, m, or cm²) to complete your answer.");
+                return;
+            }
+
+            const reqExp = q.requiredExpression;
+
+            // Check formula structures
+            let isFormulaCorrect = false;
+            if (reqExp.op === '×') {
+                if (state.op === '×' && 
+                    ((state.slot1 === reqExp.first && state.slot2 === reqExp.second) || 
+                     (state.slot1 === reqExp.second && state.slot2 === reqExp.first))) {
+                    isFormulaCorrect = true;
+                }
+            } else if (reqExp.op === '÷') {
+                if (state.op === '÷' && state.slot1 === reqExp.first && state.slot2 === reqExp.second) {
+                    isFormulaCorrect = true;
+                }
+            }
+
+            const isValueCorrect = (inputVal === reqExp.answer);
+            const isUnitCorrect = (state.unit === reqExp.unit);
+
+            state.submitted = true;
+
+            // Handle validation feedback
+            if (isFormulaCorrect && isValueCorrect && isUnitCorrect) {
+                scores[team] += 1;
+                document.getElementById(`score-${team}`).innerText = scores[team];
+
+                feedbackBox.innerHTML = `
+                    <div class="text-green-800 font-bold">✨ Correct! Superb math skills! ✨</div>
+                    <p class="text-[11px] text-green-700 mt-1">
+                        Expression: ${state.slot1} ${state.op} ${state.slot2} = ${inputVal} ${state.unit}
+                    </p>
+                `;
+                feedbackBox.className = "mt-3 p-3 bg-green-100 border border-green-300 rounded-xl text-green-800 text-xs font-medium";
+                playAnswerSFX(true); // Ascending victory chime
+            } else {
+                // Show Correct calculation structure on mistake
+                let formulaHint = "";
+                if (q.type === 0) {
+                    formulaHint = `Area = Length × Width<br>Expression: <b>${q.sideA} ${q.unit} × ${q.sideB} ${q.unit} = ${q.area} ${q.unit}²</b>`;
+                } else if (q.type === 1) {
+                    formulaHint = `Length = Area ÷ Width<br>Expression: <b>${q.area} ${q.unit}² ÷ ${q.sideB} ${q.unit} = ${q.sideA} ${q.unit}</b>`;
+                } else {
+                    formulaHint = `Width = Area ÷ Length<br>Expression: <b>${q.area} ${q.unit}² ÷ ${q.sideA} ${q.unit} = ${q.sideB} ${q.unit}</b>`;
+                }
+
+                feedbackBox.innerHTML = `
+                    <div class="font-bold text-red-800 mb-1">❌ Incorrect. Let's learn:</div>
+                    <div class="text-[11px] space-y-1">
+                        <div>${formulaHint}</div>
+                        <div class="mt-2 text-gray-500 font-normal border-t border-red-200 pt-1">
+                            Your Formula: <span class="line-through">${state.slot1 || '?'} ${state.op || '?'} ${state.slot2 || '?'}</span><br>
+                            Your Answer: <span class="line-through">${inputVal} ${state.unit}</span>
+                        </div>
+                    </div>
+                `;
+                feedbackBox.className = "mt-3 p-3 bg-red-100 border border-red-300 rounded-xl text-red-800 text-xs font-medium";
+                playAnswerSFX(false); // Playful cartoon descending sound
+            }
+
+            // Lock workspace panel to signal submission, show independent next question button
+            document.getElementById(`${team}-actions-wrapper`).classList.add('hidden');
+            document.getElementById(`${team}-next-btn-container`).classList.remove('hidden');
+
+            updateRopeAndCheckWin();
+        }
+
+        // Renders a friendly inline alert underneath the submission area
+        function showInlineWarning(team, title, message) {
+            const feedbackBox = document.getElementById(`feedback-${team}`);
+            feedbackBox.innerHTML = `
+                <div class="flex items-center gap-2 text-amber-800 font-bold mb-1">
+                    <span>⚠️</span>
+                    <span>${title}</span>
+                </div>
+                <p class="text-[11px] text-amber-700 leading-normal">${message}</p>
+            `;
+            // Styled as amber-yellow pulse warning to visually differentiate from a wrong answer
+            feedbackBox.className = "mt-3 p-3 bg-amber-50 border-2 border-amber-300 rounded-xl text-amber-800 text-xs font-medium animate-pulse";
+            feedbackBox.classList.remove('hidden');
+        }
+
+        // Synthesize exciting, driving 80s arcade sound elements
+        function initAudio() {
+            if (melodySynth) return; // Prevent double initialization
+
+            // 1. High-energy rhythm driving bassline synth
+            bassSynth = new Tone.MonoSynth({
+                oscillator: { type: "sawtooth" },
+                filter: { Q: 1, type: "lowpass", frequency: 500 },
+                envelope: { attack: 0.01, decay: 0.15, sustain: 0.3, release: 0.1 },
+                filterEnvelope: { attack: 0.01, decay: 0.15, sustain: 0.2, baseFrequency: 180, octaves: 2 }
+            }).toDestination();
+            bassSynth.volume.value = -15; // Balanced driving background volume
+
+            // 2. Playful chiptune retro lead melody synth
+            melodySynth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "triangle" },
+                envelope: { attack: 0.02, decay: 0.12, sustain: 0.5, release: 0.15 }
+            }).toDestination();
+            melodySynth.volume.value = -13; // Bright lead balance
+
+            // 3. Clear feedback SFX synth
+            sfxSynth = new Tone.Synth({
+                oscillator: { type: "sawtooth" },
+                envelope: { attack: 0.01, decay: 0.1, sustain: 0.4, release: 0.2 }
+            }).toDestination();
+            sfxSynth.volume.value = -6;
+
+            // Exciting, driving 8th-note pumping bassline notation
+            const bassPattern = [
+                { time: "0:0", note: "E2" }, { time: "0:0:2", note: "E2" }, { time: "0:1:0", note: "E2" }, { time: "0:1:2", note: "E2" },
+                { time: "0:2", note: "G2" }, { time: "0:2:2", note: "G2" }, { time: "0:3:0", note: "G2" }, { time: "0:3:2", note: "G2" },
+                { time: "1:0", note: "A2" }, { time: "1:0:2", note: "A2" }, { time: "1:1:0", note: "A2" }, { time: "1:1:2", note: "A2" },
+                { time: "1:2", note: "B2" }, { time: "1:2:2", note: "B2" }, { time: "1:3:0", note: "D2" }, { time: "1:3:2", note: "D2" }
+            ];
+
+            // Upbeat, racing, syncopated retro melody progression
+            const melodyPattern = [
+                { time: "0:0", note: "E4" }, { time: "0:0:2", note: "G4" }, { time: "0:1:0", note: "B4" }, { time: "0:1:2", note: "A4" },
+                { time: "0:2", note: "G4" }, { time: "0:2:2", note: "B4" }, { time: "0:3", note: "D5" }, { time: "0:3:2", note: "B4" },
+                { time: "1:0", note: "A4" }, { time: "1:0:2", note: "C5" }, { time: "1:1", note: "E5" }, { time: "1:1:2", note: "C5" },
+                { time: "1:2", note: "B4" }, { time: "1:2:2", note: "G4" }, { time: "1:3", note: "A4" }, { time: "1:3:2", note: "F#4" }
+            ];
+
+            melodyPart = new Tone.Part((time, value) => {
+                melodySynth.triggerAttackRelease(value.note, "16n", time);
+            }, melodyPattern).start(0);
+
+            bassPart = new Tone.Part((time, value) => {
+                bassSynth.triggerAttackRelease(value.note, "16n", time);
+            }, bassPattern).start(0);
+
+            melodyPart.loop = true;
+            melodyPart.loopEnd = "2m";
+            bassPart.loop = true;
+            bassPart.loopEnd = "2m";
+
+            // Upgraded BPM rate from 112 to 135 for maximum driving energy!
+            Tone.Transport.bpm.value = 135;
+        }
+
+        async function toggleMusic() {
+            // Tone.start is required by standard browser audio policy
+            await Tone.start();
+            initAudio();
+
+            const btn = document.getElementById('music-toggle-btn');
+
+            if (!musicPlaying) {
+                Tone.Transport.start();
+                musicPlaying = true;
+                btn.innerHTML = "<span>🎵 Mute Music</span>";
+                btn.className = "bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs md:text-sm shadow-md transition active:scale-95 flex items-center gap-2";
+            } else {
+                Tone.Transport.stop();
+                musicPlaying = false;
+                btn.innerHTML = "<span>🔇 Play Exciting Music</span>";
+                btn.className = "bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs md:text-sm shadow-md transition active:scale-95 flex items-center gap-2";
+            }
+        }
+
+        // Play specialized synthesized chime arpeggio or cartoon-style buzzer
+        function playAnswerSFX(isCorrect) {
+            try {
+                // Ensure audio context is started
+                Tone.start();
+                if (!sfxSynth) {
+                    sfxSynth = new Tone.Synth({
+                        oscillator: { type: "sawtooth" },
+                        envelope: { attack: 0.01, decay: 0.1, sustain: 0.4, release: 0.2 }
+                    }).toDestination();
+                    sfxSynth.volume.value = -6;
+                }
+
+                const now = Tone.now();
+                if (isCorrect) {
+                    // Quick major arpeggio chime (Upward retro scale)
+                    sfxSynth.triggerAttackRelease("C4", "16n", now);
+                    sfxSynth.triggerAttackRelease("E4", "16n", now + 0.07);
+                    sfxSynth.triggerAttackRelease("G4", "16n", now + 0.14);
+                    sfxSynth.triggerAttackRelease("C5", "8n", now + 0.21);
+                } else {
+                    // Descending sad sliding cartoon buzzer tone
+                    sfxSynth.triggerAttackRelease("G3", "8n", now);
+                    sfxSynth.triggerAttackRelease("E3", "4n", now + 0.1);
+                }
+            } catch (err) {
+                console.log("Audio play blocked until user interaction.");
+            }
+        }
+
+        // Hides active warning messages automatically when kids interact with input fields or choices
+        function clearWarningIfActive(team) {
+            if (!studentState[team].submitted) {
+                const feedbackBox = document.getElementById(`feedback-${team}`);
+                feedbackBox.classList.add('hidden');
+            }
+        }
+
+        function updateRopeAndCheckWin() {
+            const ropeRibbon = document.getElementById('rope-ribbon');
+            const leadValBox = document.getElementById('lead-value-box');
+
+            // Left Team (Jellyfish) pulls rope LEFT (decreases left %)
+            // Right Team (Bee) pulls rope RIGHT (increases left %)
+            const scoreDiff = scores.right - scores.left; // Positive = Bee leading, Negative = Jellyfish leading
+
+            // 50% left is center position. Offset scale reaches exactly 10% or 90% edge when the difference hits targetLead.
+            const offsetMultiplier = 40 / targetLead;
+            let ribbonLeftPercentage = 50 + (scoreDiff * offsetMultiplier);
+
+            // Restrain ribbon values to avoid overflow
+            if (ribbonLeftPercentage < 10) ribbonLeftPercentage = 10;
+            if (ribbonLeftPercentage > 90) ribbonLeftPercentage = 90;
+
+            ropeRibbon.style.left = `${ribbonLeftPercentage}%`;
+
+            // Display text layout
+            if (scoreDiff === 0) {
+                leadValBox.innerText = "⚖️ Tied!";
+                leadValBox.className = "bg-white border-2 border-slate-300 rounded-xl py-1 px-4 mt-1 font-bold text-sm text-slate-700 shadow-sm";
+            } else if (scoreDiff < 0) {
+                leadValBox.innerText = `🪼 Jellyfish +${Math.abs(scoreDiff)}!`;
+                leadValBox.className = "bg-indigo-100 border-2 border-indigo-300 rounded-xl py-1 px-4 mt-1 font-bold text-sm text-indigo-700 shadow-sm";
+            } else {
+                leadValBox.innerText = `🐝 Bee +${scoreDiff}!`;
+                leadValBox.className = "bg-amber-100 border-2 border-amber-300 rounded-xl py-1 px-4 mt-1 font-bold text-sm text-amber-700 shadow-sm";
+            }
+
+            // Check Win Condition based on dynamic targetLead preference
+            if (scoreDiff <= -targetLead) {
+                triggerWin('Jellyfish');
+            } else if (scoreDiff >= targetLead) {
+                triggerWin('Bee');
+            }
+        }
+
+        function triggerWin(winner) {
+            const modal = document.getElementById('win-modal');
+            const title = document.getElementById('win-title');
+            const desc = document.getElementById('win-desc');
+            const emoji = document.getElementById('win-emoji');
+
+            if (winner === 'Jellyfish') {
+                emoji.innerText = '🪼';
+                title.innerText = "Team Jellyfish Wins!";
+                desc.innerText = `By calculating dimensions flawlessly, Team Jellyfish pulled the rope all the way to the left with a solid ${targetLead}-point lead!`;
+            } else {
+                emoji.innerText = '🐝';
+                title.innerText = "Team Bee Wins!";
+                desc.innerText = `By calculating dimensions flawlessly, Team Bee pulled the rope all the way to the right with a solid ${targetLead}-point lead!`;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function showSimpleMessage(title, text) {
+            const container = document.createElement('div');
+            container.className = "fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4";
+            container.innerHTML = `
+                <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center border-4 border-indigo-400 shadow-xl">
+                    <span class="text-3xl">💡</span>
+                    <h4 class="font-bold text-lg text-indigo-800 mt-2 mb-1">${title}</h4>
+                    <p class="text-sm text-gray-600 mb-4 whitespace-pre-line">${text}</p>
+                    <button id="close-msg-btn" class="bg-indigo-500 text-white font-bold py-2 px-6 rounded-lg text-xs hover:bg-indigo-600 shadow-md">Got it!</button>
+                </div>
+            `;
+            document.body.appendChild(container);
+            document.getElementById('close-msg-btn').onclick = () => {
+                container.remove();
+            };
+        }
+
+        function resetWholeGame() {
+            scores.left = 0;
+            scores.right = 0;
+            document.getElementById('score-left').innerText = '0';
+            document.getElementById('score-right').innerText = '0';
+            document.getElementById('win-modal').classList.add('hidden');
+            
+            // Re-render preferences selection screen upon replay
+            document.getElementById('game-board-wrapper').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
